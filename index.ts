@@ -118,10 +118,84 @@ function calculateAge(birthday: Date): number {
   return age;
 }
 
+app.patch("/users/:email/profile", async (req: Request, res: Response) => {
+  try {
+    const { email } = req.params;
+    const {
+      firstName,
+      lastName,
+      phone,
+      address1,
+      city1,
+      address2,
+      city2,
+      address3,
+      city3,
+      address4,
+      city4,
+      dob,
+    } = req.body;
 
-app.get("/users", async (req:Request, res:Response) => {
-    const users = await prisma.user.findMany();
-    res.json(users);
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+      include: { userProfile: true },
+    });
+
+    if (!existingUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    if (!existingUser.userProfile) {
+      return res.status(404).json({ error: "UserProfile not found" });
+    }
+
+    const updateData: any = {
+      firstName,
+      lastName,
+      phone,
+      address1,
+      city1,
+      address2,
+      city2,
+      address3,
+      city3,
+      address4,
+      city4,
+      dob,
+    };
+
+    if (dob) {
+      const birthday = new Date(dob);
+      const age = calculateAge(birthday);
+      updateData.dob = birthday;
+      updateData.age = age;
+    }
+
+    const updatedProfile = await prisma.userProfile.update({
+      where: { profileId: existingUser.userProfile.profileId },
+      data: removeNullFields(updateData),
+    });
+
+    res.json(updatedProfile);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "An error occurred while updating the UserProfile." });
+  }
+});
+
+
+app.get("/users", async (req: Request, res: Response) => {
+  const users = await prisma.user.findMany({
+    select: {
+      userId: true,
+      email: true,
+      role: true,
+      createdAt: true,
+      updatedAt: true,
+      userProfile: true,
+    },
+  });
+  res.json(users);
 });
 
 const removeNullFields = (obj: any) => {
@@ -132,7 +206,14 @@ app.get("/users/:email", async (req: Request, res: Response) => {
   const { email } = req.params;
   const user = await prisma.user.findUnique({
     where: { email },
-    include: { userProfile: true },
+    select: {
+      userId: true,
+      email: true,
+      role: true,
+      createdAt: true,
+      updatedAt: true,
+      userProfile: true,
+    },
   });
 
   if (!user) {
@@ -189,7 +270,13 @@ app.delete("/users/:email", async (req: Request, res: Response) => {
       where: {
         email: email,
       },
-
+      select: {
+        userId: true,
+        email: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
 
     res.json(deletedUser);

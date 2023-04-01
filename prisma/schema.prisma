@@ -37,7 +37,7 @@ model UserProfile {
   profileId String    @id @default(uuid())
   firstName String
   lastName  String
-  phone     Int
+  phone     String
   address1  String
   city1     String
   address2  String?
