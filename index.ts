@@ -1,5 +1,5 @@
 import express, { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Role } from '@prisma/client';
 import argon2 from 'argon2';
 
 const app = express();
@@ -28,6 +28,7 @@ app.post("/users", async (req: Request, res: Response) => {
       email: user.email,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
+      role: user.role,
     };
     
     res.json(userResponse)
@@ -37,22 +38,113 @@ app.post("/users", async (req: Request, res: Response) => {
   }
 });
 
+app.post("/users/:email/profile", async (req: Request, res: Response) => {
+  try {
+    const { email } = req.params;
+    const {
+      firstName,
+      lastName,
+      phone,
+      address1,
+      city1,
+      address2,
+      city2,
+      address3,
+      city3,
+      address4,
+      city4,
+      dob,
+    } = req.body;
+
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+
+    if (!existingUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const birthday = new Date(dob);
+    const age = calculateAge(birthday);
+
+    const userProfile = await prisma.userProfile.create({
+      data: {
+        firstName,
+        lastName,
+        phone,
+        address1,
+        city1,
+        address2,
+        city2,
+        address3,
+        city3,
+        address4,
+        city4,
+        dob: birthday,
+        age,
+        userId: existingUser.userId,
+      },
+    });
+
+    const updatedUser = await prisma.user.update({
+      where: { email },
+      data: { role: "VERIFIED", userProfile: { connect: { profileId: userProfile.profileId } } },
+    });
+
+    const responseUserProfile = {
+      ...userProfile,
+      role: updatedUser.role,
+      email: updatedUser.email,
+      createdAt: userProfile.createdAt,
+      updatedAt: userProfile.updatedAt,
+    };
+
+    const filteredResponseUserProfile = Object.fromEntries(
+      Object.entries(responseUserProfile).filter(([key, value]) => value !== null)
+    );
+
+    res.json(filteredResponseUserProfile);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "An error occurred. Make sure the user exists!" });
+  }
+});
+
+function calculateAge(birthday: Date): number {
+  const today = new Date();
+  const age = today.getFullYear() - birthday.getFullYear();
+  const monthDifference = today.getMonth() - birthday.getMonth();
+  if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birthday.getDate())) {
+    return age - 1;
+  }
+  return age;
+}
+
 
 app.get("/users", async (req:Request, res:Response) => {
     const users = await prisma.user.findMany();
     res.json(users);
 });
 
-app.get("/users/:email", async (req:Request, res:Response) => {
+const removeNullFields = (obj: any) => {
+  return Object.fromEntries(Object.entries(obj).filter(([_, v]) => v !== null));
+};
+
+app.get("/users/:email", async (req: Request, res: Response) => {
   const { email } = req.params;
-    const user = await prisma.user.findUnique({
-      where: { email },
-    });
-    if (!user) {
-      return res.status(404).json({ message: "There is no user with that email address!" });
-    }
-    res.json(user);
+  const user = await prisma.user.findUnique({
+    where: { email },
+    include: { userProfile: true },
   });
+
+  if (!user) {
+    return res.status(404).json({ message: "There is no user with that email address!" });
+  }
+
+  const userProfile = user.userProfile
+    ? removeNullFields(user.userProfile)
+    : null;
+
+  res.json({ ...user, userProfile });
+});
 
 // Update user password by email
 app.patch("/users/:email", async (req: Request, res: Response) => {

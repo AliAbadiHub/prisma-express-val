@@ -17,13 +17,13 @@ enum Role {
 }
 
 model User {
-  userId    String    @id @default(uuid())
-  email     String    @unique
-  password  String
-  role      Role      @default(BASIC)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime? @updatedAt
-  // userProfile          UserProfile    @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  userId      String       @id @default(uuid())
+  email       String       @unique
+  password    String
+  role        Role         @default(BASIC)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime?    @updatedAt
+  userProfile UserProfile? @relation
   // createdProducts      Product[]      @relation("createdByUser")
   // updatedProducts      Product[]      @relation("updatedByUser")
   // createdSupermarkets  Supermarket[]  @relation("createdBySupermarketUser")
@@ -33,22 +33,26 @@ model User {
   // auditLogs            AuditLog[]
 }
 
-// model UserProfile {
-//   profileId String    @id @default(uuid())
-//   firstName String
-//   lastName  String
-//   phone     Int
-//   address1  String
-//   address2  String?
-//   address3  String?
-//   address4  String?
-//   dob       DateTime
-//   age       Int
-//   createdAt DateTime  @default(now())
-//   updatedAt DateTime? @updatedAt
-//   user      User?
-//   userId    String    @unique
-// }
+model UserProfile {
+  profileId String    @id @default(uuid())
+  firstName String
+  lastName  String
+  phone     Int
+  address1  String
+  city1     String
+  address2  String?
+  city2     String?
+  address3  String?
+  city3     String?
+  address4  String?
+  city4     String?
+  dob       DateTime
+  age       Int
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+  user      User?     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  userId    String?   @unique
+}
 
 // enum ProductCategory {
 //   Produce
