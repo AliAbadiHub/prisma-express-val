@@ -17,15 +17,15 @@ enum Role {
 }
 
 model User {
-  userId      String       @id @default(uuid())
-  email       String       @unique
-  password    String
-  role        Role         @default(BASIC)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime?    @updatedAt
-  userProfile UserProfile? @relation
-  // createdProducts      Product[]      @relation("createdByUser")
-  // updatedProducts      Product[]      @relation("updatedByUser")
+  userId          String       @id @default(uuid())
+  email           String       @unique
+  password        String
+  role            Role         @default(BASIC)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime?    @updatedAt
+  userProfile     UserProfile? @relation
+  createdProducts Product[]    @relation("createdByUser")
+  updatedProducts Product[]    @relation("updatedByUser")
   // createdSupermarkets  Supermarket[]  @relation("createdBySupermarketUser")
   // updatedSupermarkets  Supermarket[]  @relation("updatedBySupermarketUser")
   // createdProductPrices ProductPrice[] @relation("createdByProductPriceUser")
@@ -54,27 +54,27 @@ model UserProfile {
   userId    String?   @unique
 }
 
-// enum ProductCategory {
-//   Produce
-//   Dairy
-//   Butcher
-//   Grocery
-//   Confectionary
-// }
+enum ProductCategory {
+  Produce
+  Dairy
+  Butcher
+  Grocery
+  Confectionary
+}
 
-// model Product {
-//   productId       String          @id @default(uuid())
-//   productName     String          @unique
-//   productCategory ProductCategory
-//   productComments String
-//   createdAt       DateTime        @default(now())
-//   createdBy       User?           @relation("createdByUser", fields: [createdById], references: [userId])
-//   createdById     String?
-//   updatedAt       DateTime?       @updatedAt
-//   updatedBy       User?           @relation("updatedByUser", fields: [updatedById], references: [userId])
-//   updatedById     String?
-//   inventory   Inventory[]
-// }
+model Product {
+  productId       String          @id @default(uuid())
+  productName     String          @unique
+  productCategory ProductCategory
+  productComments String
+  createdAt       DateTime        @default(now())
+  createdBy       User?           @relation("createdByUser", fields: [createdById], references: [userId])
+  createdById     String?
+  updatedAt       DateTime?       @updatedAt
+  updatedBy       User?           @relation("updatedByUser", fields: [updatedById], references: [userId])
+  updatedById     String?
+  // inventory   Inventory[]
+}
 
 // model Supermarket {
 //   supermarketId       String         @id @default(uuid())
