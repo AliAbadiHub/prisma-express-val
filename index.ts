@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import authController from "./auth/auth.controller";
 import productController from './controllers/productController';
 import supermarketController from './controllers/supermarketController';
+import inventoryController from './controllers/inventoryController';
 
 dotenv.config();
 
@@ -15,6 +16,7 @@ app.use("/users", userController);
 app.use("/auth", authController);
 app.use('/products', productController);
 app.use('/supermarket', supermarketController);
+app.use('/inventory', inventoryController);
 
 app.listen(3333, () => {
   console.log("Server running beautifully on http://localhost:3333");

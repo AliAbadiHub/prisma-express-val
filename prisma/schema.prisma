@@ -28,8 +28,8 @@ model User {
   updatedProducts     Product[]     @relation("updatedByUser")
   createdSupermarkets Supermarket[] @relation("createdBySupermarketUser")
   updatedSupermarkets Supermarket[] @relation("updatedBySupermarketUser")
-  // createdInventories Inventory[] @relation("createdByInventoryUser")
-  // updatedInventories Inventory[] @relation("updatedByInventoryUser")
+  createdInventories  Inventory[]   @relation("createdByInventoryUser")
+  updatedInventories  Inventory[]   @relation("updatedByInventoryUser")
   // auditLogs            AuditLog[]
 }
 
@@ -73,43 +73,42 @@ model Product {
   updatedAt       DateTime?       @updatedAt
   updatedBy       User?           @relation("updatedByUser", fields: [updatedById], references: [userId])
   updatedById     String?
-  // inventory   Inventory[]
+  inventory       Inventory[]
 }
 
 model Supermarket {
-  supermarketId       String    @id @default(uuid())
-  supermarketName     String    @unique
+  supermarketId       String      @id @default(uuid())
+  supermarketName     String      @unique
   supermarketComments String
-  createdAt           DateTime  @default(now())
-  createdBy           User?     @relation("createdBySupermarketUser", fields: [createdById], references: [userId])
+  createdAt           DateTime    @default(now())
+  createdBy           User?       @relation("createdBySupermarketUser", fields: [createdById], references: [userId])
   createdById         String?
-  updatedAt           DateTime? @updatedAt
-  updatedBy           User?     @relation("updatedBySupermarketUser", fields: [updatedById], references: [userId])
+  updatedAt           DateTime?   @updatedAt
+  updatedBy           User?       @relation("updatedBySupermarketUser", fields: [updatedById], references: [userId])
   updatedById         String?
   city                String
-  //   inventory       Inventory[]
+  inventory           Inventory[]
 
   @@index([city])
 }
 
-// model Inventory {
-//   // id            String      @id @default(uuid())
-//   price         Float
-//   createdAt     DateTime    @default(now())
-//   createdBy     User?       @relation("createdByInventoryUser", fields: [createdById], references: [userId])
-//   createdById   String?
-//   updatedAt     DateTime?   @updatedAt
-//   updatedBy     User?       @relation("updatedByInventoryUser", fields: [updatedById], references: [userId])
-//   updatedById   String?
-//   productId     String
-//   supermarketId String
-//   product       Product     @relation(fields: [productId], references: [productId])
-//   supermarket   Supermarket @relation(fields: [supermarketId], references: [supermarketId])
+model Inventory {
+  price         Float
+  createdAt     DateTime    @default(now())
+  createdBy     User?       @relation("createdByInventoryUser", fields: [createdById], references: [userId])
+  createdById   String?
+  updatedAt     DateTime?   @updatedAt
+  updatedBy     User?       @relation("updatedByInventoryUser", fields: [updatedById], references: [userId])
+  updatedById   String?
+  productId     String
+  supermarketId String
+  product       Product     @relation(fields: [productId], references: [productId])
+  supermarket   Supermarket @relation(fields: [supermarketId], references: [supermarketId])
 
-//   @@id([supermarketId, productId])
-//   @@unique([productId, supermarketId])
-//   @@index([supermarketId])
-// }
+  @@id([supermarketId, productId])
+  @@unique([productId, supermarketId])
+  @@index([supermarketId])
+}
 
 // enum ActionType {
 //   CREATE
