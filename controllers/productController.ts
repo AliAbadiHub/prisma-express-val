@@ -9,37 +9,50 @@ const router = express.Router();
 
 // Create a new product (requires VERIFIED or ADMIN role)
 router.post('/', authGuard, async (req: CustomRequest, res: Response) => {
-    // Check if the user has VERIFIED or ADMIN role
     if (req.user.role !== 'VERIFIED' && req.user.role !== 'ADMIN') {
       return res.status(403).json({ message: 'Insufficient permissions.' });
     }
   
     const { productName, productCategory, productComments } = req.body;
-  try {
-    const newProduct = await prisma.product.create({
-      data: {
-        productName,
-        productCategory,
-        productComments,
-        createdBy: {
-          connect: {
-            userId: req.user.userId,
+  
+    try {
+      const existingProduct = await prisma.product.findUnique({
+        where: {
+          productName,
+        },
+      });
+  
+      if (existingProduct) {
+        return res.status(400).json({
+          message:
+            "The product you entered already exists in the database. If you want to update the price or change the entry, please use the 'update' feature.",
+        });
+      }
+  
+      const newProduct = await prisma.product.create({
+        data: {
+          productName,
+          productCategory,
+          productComments,
+          createdBy: {
+            connect: {
+              userId: req.user.userId,
+            },
+          },
+          updatedBy: {
+            connect: {
+              userId: req.user.userId,
+            },
           },
         },
-        updatedBy: {
-          connect: {
-            userId: req.user.userId,
-          },
-        },
-      },
-    });
-
-    res.status(201).json(newProduct);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'An error occurred while creating the product.' });
-  }
-});
+      });
+  
+      res.status(201).json(newProduct);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'An error occurred while creating the product.' });
+    }
+  });
   
 
     router.get('/', async (req: CustomRequest, res: Response) => {
@@ -80,26 +93,47 @@ router.get('/:id', async (req: CustomRequest, res: Response) => {
   }
 });
   
-router.put('/:id', authGuard, async (req: CustomRequest, res: Response) => {
+router.patch('/:id', authGuard, async (req: CustomRequest, res: Response) => {
     if (req.user.role !== 'VERIFIED' && req.user.role !== 'ADMIN') {
       return res.status(403).json({ message: 'Insufficient permissions.' });
     }
   
     const { id } = req.params;
-    const { productName, productCategory, productComments } = req.body;
+    const { productName, productCategory, productComments, price } = req.body;
+  
     try {
-      const updatedProduct = await prisma.product.update({
-        where: { productId: id },
-        data: {
-          productName,
-          productCategory,
-          productComments,
-          updatedAt: new Date(),
-          updatedBy: {
-            connect: {
-              userId: req.user.userId,
-            },
+      const updateData: any = {
+        updatedBy: {
+          connect: {
+            userId: req.user.userId,
           },
+        },
+      };
+  
+      if (price) {
+        updateData.price = price;
+      }
+  
+      if (req.user.role === 'ADMIN') {
+        if (productName) {
+          updateData.productName = productName;
+        }
+        if (productCategory) {
+          updateData.productCategory = productCategory;
+        }
+        if (productComments) {
+          updateData.productComments = productComments;
+        }
+      }
+  
+      const updatedProduct = await prisma.product.update({
+        where: {
+          productId: id,
+        },
+        data: updateData,
+        include: {
+          createdBy: true,
+          updatedBy: true,
         },
       });
   
