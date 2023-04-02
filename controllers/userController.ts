@@ -1,5 +1,6 @@
 import { Request, Response, Router } from "express";
 import { PrismaClient } from "@prisma/client";
+import { authGuard } from "../auth/auth.guard";
 import argon2 from "argon2";
 
 const prisma = new PrismaClient();
@@ -37,6 +38,7 @@ router.post("/", async (req: Request, res: Response) => {
     }
   });
 
+  router.use(authGuard);
   router.post("/:email/profile", async (req: Request, res: Response) => {
     try {
       const { email } = req.params;

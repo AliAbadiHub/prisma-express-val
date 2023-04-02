@@ -73,7 +73,7 @@ model UserProfile {
 //   updatedAt       DateTime?       @updatedAt
 //   updatedBy       User?           @relation("updatedByUser", fields: [updatedById], references: [userId])
 //   updatedById     String?
-//   productPrices   ProductPrice[]
+//   inventory   Inventory[]
 // }
 
 // model Supermarket {
@@ -87,12 +87,12 @@ model UserProfile {
 //   updatedBy           User?          @relation("updatedBySupermarketUser", fields: [updatedById], references: [userId])
 //   updatedById         String?
 //   city                String
-//   productPrices       ProductPrice[]
+//   inventory       Inventory[]
 
 //   @@index([city])
 // }
 
-// model ProductPrice {
+// model Inventory {
 //   // id            String      @id @default(uuid())
 //   price         Float
 //   createdAt     DateTime    @default(now())
