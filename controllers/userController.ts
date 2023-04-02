@@ -2,6 +2,7 @@ import { Request, Response, Router } from "express";
 import { PrismaClient } from "@prisma/client";
 import { authGuard } from "../auth/auth.guard";
 import argon2 from "argon2";
+import { CustomRequest } from "../types";
 
 const prisma = new PrismaClient();
 
@@ -286,6 +287,29 @@ router.post("/", async (req: Request, res: Response) => {
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: "An error occurred while deleting the user." });
+    }
+  });
+
+
+  //promote an existing user to ADMIN role
+  router.patch('/:userId/promote', authGuard, async (req: CustomRequest, res: Response) => {
+    const { userId } = req.params;
+  
+    // Check if the user making the request is an ADMIN
+    if (req.user.role !== 'ADMIN') {
+      return res.status(403).json({ message: 'Insufficient permissions.' });
+    }
+  
+    try {
+      const updatedUser = await prisma.user.update({
+        where: { userId },
+        data: { role: 'ADMIN' },
+      });
+  
+      res.json(updatedUser);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'An error occurred while promoting the user.' });
     }
   });
   
