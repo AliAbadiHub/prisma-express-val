@@ -25,7 +25,7 @@ router.post('/', authGuard, async (req: CustomRequest, res: Response) => {
       if (existingProduct) {
         return res.status(400).json({
           message:
-            "The product you entered already exists in the database. If you want to update the price or change the entry, please use the 'update' feature.",
+            "The product you entered already exists in the database. If you want to update the price, please use the 'update' feature.",
         });
       }
   
