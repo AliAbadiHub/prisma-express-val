@@ -66,6 +66,64 @@ router.get('/', authGuard, async (_req: CustomRequest, res: Response) => {
   }
 });
 
+// Find the cheapest listing of a product in a city
+router.get('/cheapest/:productId/:city', async (req: Request, res: Response) => {
+  const { productId, city } = req.params;
+
+  try {
+    const cheapestListing = await prisma.inventory.findFirst({
+      where: {
+        productId,
+        supermarket: {
+          city,
+        },
+      },
+      orderBy: {
+        price: 'asc',
+      },
+      include: {
+        supermarket: true,
+        product: true,
+      },
+    });
+
+    if (!cheapestListing) {
+      return res.status(404).json({ message: 'No listing found for the given product and city.' });
+    }
+
+    res.json(cheapestListing);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'An error occurred while fetching the cheapest listing.' });
+  }
+});
+
+// Get all inventory items in a given supermarket
+router.get('/supermarket/:supermarketId', async (req: Request, res: Response) => {
+  const { supermarketId } = req.params;
+
+  try {
+    const itemsInSupermarket = await prisma.inventory.findMany({
+      where: {
+        supermarketId,
+      },
+      include: {
+        supermarket: true,
+        product: true,
+      },
+    });
+
+    if (!itemsInSupermarket || itemsInSupermarket.length === 0) {
+      return res.status(404).json({ message: 'No items found in the given supermarket.' });
+    }
+
+    res.json(itemsInSupermarket);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'An error occurred while fetching the items in the supermarket.' });
+  }
+});
+
 // Update an existing inventory entry (accessible to VERIFIED and ADMIN roles)
 router.patch('/:supermarketId/:productId', authGuard, async (req: CustomRequest, res: Response) => {
   if (req.user.role !== 'ADMIN' && req.user.role !== 'VERIFIED') {
