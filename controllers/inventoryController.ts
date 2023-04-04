@@ -124,9 +124,19 @@ router.get('/supermarket/:supermarketId', async (req: Request, res: Response) =>
       where: {
         supermarketId,
       },
-      include: {
-        supermarket: true,
-        product: true,
+      select: {
+        price: true,
+        updatedAt: true,
+        supermarket: {
+          select: {
+            supermarketName: true,
+          },
+        },
+        product: {
+          select: {
+            productName: true,
+          },
+        },
       },
     });
 
