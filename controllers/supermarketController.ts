@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { CustomRequest } from '../types';
 import { authGuard } from '../auth/auth.guard';
+import { TreeLevelColumn } from 'typeorm';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -30,6 +31,19 @@ router.post('/', authGuard, async (req: CustomRequest, res: Response) => {
           },
         },
       },
+      select: {
+        supermarketId: true,
+        supermarketName: true,
+        supermarketComments: true,
+        city: true,
+        createdAt: true,
+        createdBy: {
+          select: {
+            userId: true,
+            email: true,
+          },
+        },
+      },
     });
 
     res.status(201).json(newSupermarket);
@@ -40,12 +54,17 @@ router.post('/', authGuard, async (req: CustomRequest, res: Response) => {
 });
 
 // Get all supermarkets
-router.get('/', async (_req: Request, res: Response) => {
+router.get('/', authGuard, async (req: CustomRequest, res: Response) => {
+  if (!['BASIC', 'VERIFIED', 'ADMIN'].includes(req.user.role)) {
+    return res.status(403).json({ message: 'Insufficient permissions.' });
+  }
+
   try {
     const supermarkets = await prisma.supermarket.findMany({
-      include: {
-        createdBy: true,
-        updatedBy: true,
+      select: {
+        supermarketId: true,
+        supermarketName: true,
+        city: true,
       },
     });
     res.json(supermarkets);
@@ -56,16 +75,21 @@ router.get('/', async (_req: Request, res: Response) => {
 });
 
 // Get a supermarket by ID
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', authGuard, async (req: CustomRequest, res: Response) => {
+  if (!['BASIC', 'VERIFIED', 'ADMIN'].includes(req.user.role)) {
+    return res.status(403).json({ message: 'Insufficient permissions.' });
+  }
+
   const { id } = req.params;
   try {
     const supermarket = await prisma.supermarket.findUnique({
       where: {
         supermarketId: id,
       },
-      include: {
-        createdBy: true,
-        updatedBy: true,
+      select: {
+        supermarketId: true,
+        supermarketName: true,
+        city: true,
       },
     });
 
