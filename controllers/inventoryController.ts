@@ -52,14 +52,31 @@ router.post('/', authGuard, async (req: CustomRequest, res: Response) => {
 router.get('/', authGuard, async (_req: CustomRequest, res: Response) => {
   try {
     const inventories = await prisma.inventory.findMany({
-      include: {
-        createdBy: true,
-        updatedBy: true,
-        product: true,
-        supermarket: true,
+      select: {
+        price: true,
+        updatedAt: true,
+        product: {
+          select: {
+            productName: true,
+          },
+        },
+        supermarket: {
+          select: {
+            supermarketName: true,
+          },
+        },
       },
     });
-    res.json(inventories);
+
+    // Map the data to the desired format
+    const formattedInventories = inventories.map((inventory) => ({
+      productName: inventory.product.productName,
+      supermarketName: inventory.supermarket.supermarketName,
+      price: inventory.price,
+      updatedAt: inventory.updatedAt,
+    }));
+
+    res.json(formattedInventories);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'An error occurred while fetching inventory entries.' });
