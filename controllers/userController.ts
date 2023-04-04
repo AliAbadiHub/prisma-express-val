@@ -312,5 +312,28 @@ router.post("/", async (req: Request, res: Response) => {
       res.status(500).json({ error: 'An error occurred while promoting the user.' });
     }
   });
+
+  router.patch('/:userId/demote', authGuard, async (req: CustomRequest, res: Response) => {
+    const { userId } = req.params;
+  
+    // Check if the user making the request is an ADMIN
+    if (req.user.role !== 'ADMIN') {
+      return res.status(403).json({ message: 'Insufficient permissions.' });
+    }
+  
+    try {
+      const updatedUser = await prisma.user.update({
+        where: { userId },
+        data: { role: 'VERIFIED' },
+      });
+  
+      res.json(updatedUser);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'An error occurred while demoting the user.' });
+    }
+  });
+
+  
   
   export default router;
