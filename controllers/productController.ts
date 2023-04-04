@@ -55,37 +55,41 @@ router.post('/', authGuard, async (req: CustomRequest, res: Response) => {
   });
   
 
-    router.get('/', async (req: CustomRequest, res: Response) => {
-        try {
-          const products = await prisma.product.findMany({
-            include: {
-              createdBy: true,
-              updatedBy: true,
-            },
-          });
-          res.json(products);
-        } catch (error) {
-          console.error(error);
-          res.status(500).json({ error: 'An error occurred while fetching products.' });
-        }
+  router.get('/', async (req: CustomRequest, res: Response) => {
+    try {
+      const products = await prisma.product.findMany({
+        select: {
+          productId: true,
+          productName: true,
+          productCategory: true,
+          productComments: true,
+        },
       });
+      res.json(products);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'An error occurred while fetching products.' });
+    }
+  });
 
 
-router.get('/:id', async (req: CustomRequest, res: Response) => {
-  const { id } = req.params;
-  try {
-    const product = await prisma.product.findUnique({
-      where: { productId: id },
-      include: {
-        createdBy: true,
-        updatedBy: true,
-      },
-    });
-
-    if (product) {
-      res.json(product);
-    } else {
-      res.status(404).json({ message: 'Product not found.' });
+  router.get('/:id', async (req: CustomRequest, res: Response) => {
+    const { id } = req.params;
+    try {
+      const product = await prisma.product.findUnique({
+        where: { productId: id },
+        select: {
+          productId: true,
+          productName: true,
+          productCategory: true,
+          productComments: true,
+        },
+      });
+  
+      if (product) {
+        res.json(product);
+      } else {
+        res.status(404).json({ message: 'Product not found.' });
     }
   } catch (error) {
     console.error(error);
@@ -109,11 +113,7 @@ router.patch('/:id', authGuard, async (req: CustomRequest, res: Response) => {
           },
         },
       };
-  
-      if (price) {
-        updateData.price = price;
-      }
-  
+
       if (req.user.role === 'ADMIN') {
         if (productName) {
           updateData.productName = productName;
@@ -131,9 +131,18 @@ router.patch('/:id', authGuard, async (req: CustomRequest, res: Response) => {
           productId: id,
         },
         data: updateData,
-        include: {
-          createdBy: true,
-          updatedBy: true,
+        select: {
+          productId: true,
+          productName: true,
+          productCategory: true,
+          productComments: true,
+          updatedAt: true,
+          updatedBy: {
+            select: {
+              userId: true,
+              email: true,
+            },
+          },
         },
       });
   
@@ -145,7 +154,7 @@ router.patch('/:id', authGuard, async (req: CustomRequest, res: Response) => {
   });
   // Delete a product (requires VERIFIED or ADMIN role)
   router.delete('/:id', authGuard, async (req: CustomRequest, res: Response) => {
-    if (req.user.role !== 'VERIFIED' && req.user.role !== 'ADMIN') {
+    if (req.user.role !== 'ADMIN') {
       return res.status(403).json({ message: 'Insufficient permissions.' });
     }
   
