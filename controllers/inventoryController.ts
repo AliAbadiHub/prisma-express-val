@@ -47,15 +47,24 @@ router.post('/', authGuard, async (req: CustomRequest, res: Response) => {
           },
         },
       },
+      // Include product and supermarket to fetch productName and supermarketName
+      include: {
+        product: true,
+        supermarket: true,
+      },
     });
 
-    res.status(201).json(newInventory);
+    // Include productName and supermarketName in the response
+    res.status(201).json({
+      ...newInventory,
+      productName: newInventory.product.productName,
+      supermarketName: newInventory.supermarket.supermarketName,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'An error occurred while creating the inventory entry.' });
   }
 });
-
 // Get all inventory entries
 router.get('/', authGuard, async (req: CustomRequest, res: Response) => {
   try {

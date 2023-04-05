@@ -28,57 +28,42 @@ router.post('/', authGuard, async (req: CustomRequest, res: Response) => {
         },
         include: {
           supermarket: true,
+          product: true,
         },
       });
 
       if (inventoryItem) {
         shoppingItemsWithPrices.push({
-          productId: item.productId,
-          supermarketId: inventoryItem.supermarketId,
+          productName: inventoryItem.product.productName,
           supermarketName: inventoryItem.supermarket.supermarketName,
           quantity: item.quantity,
           lowestPrice: inventoryItem.price,
-          subtotal: inventoryItem.price * item.quantity,
+          subtotal: parseFloat((inventoryItem.price * item.quantity).toFixed(2)),
+        });
+      } else {
+        shoppingItemsWithPrices.push({
+          productName: `Product with ID ${item.productId} not found in ${city}`,
+          supermarketName: 'N/A',
+          quantity: item.quantity,
+          lowestPrice: 0,
+          subtotal: 0,
         });
       }
     }
 
-    const newShoppingList = await prisma.shoppingList.create({
-      data: {
-        city,
-        date: new Date(),
-        user: {
-          connect: {
-            userId: req.user.userId,
-          },
-        },
-        shoppingItems: {
-          create: shoppingItemsWithPrices.map((item: any) => ({
-            productId: item.productId,
-            supermarketId: item.supermarketId,
-            quantity: item.quantity,
-            lowestPrice: item.lowestPrice,
-            subtotal: item.subtotal,
-          })),
-        },
-      },
-      include: {
-        user: true,
-        shoppingItems: {
-          include: {
-            product: true,
-            supermarket: true,
-          },
-        },
-      },
-    });
-
-    const total = shoppingItemsWithPrices.reduce(
+    const total = parseFloat(shoppingItemsWithPrices.reduce(
       (accumulator, currentItem) => accumulator + currentItem.subtotal,
       0
+    ).toFixed(2)
     );
 
-    res.status(201).json({ shoppingList: newShoppingList, userEmail: req.user.email, total: total });
+    res.status(201).json({
+      userEmail: req.user.email,
+      currentDate: currentDate,
+      city: city,
+      shoppingItems: shoppingItemsWithPrices,
+      total: total,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'An error occurred while creating the shopping list.' });
