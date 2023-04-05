@@ -1,10 +1,18 @@
 import { Router, Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, ProductCategory } from '@prisma/client';
 import { CustomRequest } from '../types';
 import { authGuard } from '../auth/auth.guard';
 
 const router = Router();
 const prisma = new PrismaClient();
+
+// Helper function to convert string to ProductCategory enum
+function toProductCategory(category: string): ProductCategory | null {
+  if (Object.values(ProductCategory).includes(category as ProductCategory)) {
+    return category as ProductCategory;
+  }
+  return null;
+}
 
 // Create a new inventory entry (accessible to VERIFIED and ADMIN roles)
 router.post('/', authGuard, async (req: CustomRequest, res: Response) => {
@@ -172,6 +180,68 @@ router.get('/supermarket/:supermarketId', async (req: Request, res: Response) =>
     res.status(500).json({ error: 'An error occurred while fetching the items in the supermarket.' });
   }
 });
+
+// Get the lowest price of every item in a given product category within a city
+router.get('/category/:city/:productCategory', authGuard, async (req: CustomRequest, res: Response) => {
+  if (req.user.role !== 'ADMIN' && req.user.role !== 'VERIFIED') {
+    return res.status(403).json({ message: 'Insufficient permissions.' });
+  }
+
+  const { city, productCategory } = req.params;
+
+  // Convert the productCategory string to the appropriate enum
+  const categoryEnum = toProductCategory(productCategory);
+
+  if (!categoryEnum) {
+    return res.status(400).json({ message: 'Invalid product category.' });
+  }
+
+  try {
+    const productList = await prisma.product.findMany({
+      where: {
+        productCategory: categoryEnum,
+        inventory: {
+          some: {
+            supermarket: {
+              city: city,
+            },
+            inStock: true,
+          },
+        },
+      },
+      select: {
+        productName: true,
+        inventory: {
+          where: {
+            supermarket: {
+              city: city,
+            },
+            inStock: true,
+          },
+          orderBy: {
+            price: 'asc',
+          },
+          take: 1,
+          select: {
+            price: true,
+            supermarket: {
+              select: {
+                supermarketName: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    res.json(productList);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'An error occurred while fetching the products by category.' });
+  }
+});
+
+
 
 // Update an existing inventory entry (accessible to VERIFIED and ADMIN roles)
 router.patch('/:supermarketId/:productId', authGuard, async (req: CustomRequest, res: Response) => {
