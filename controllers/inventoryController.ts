@@ -50,18 +50,12 @@ router.post('/', authGuard, async (req: CustomRequest, res: Response) => {
 
 // Get all inventory entries
 router.get('/', authGuard, async (req: CustomRequest, res: Response) => {
-  const allowedRoles = ['BASIC', 'VERIFIED', 'ADMIN'];
-
-  if (!allowedRoles.includes(req.user.role)) {
-    return res.status(403).json({ message: 'Insufficient permissions.' });
-  }
-
   try {
     const inventories = await prisma.inventory.findMany({
       select: {
         price: true,
+        inStock: true,
         updatedAt: true,
-        updatedBy: req.user.role === 'ADMIN' ? { select: { email: true, userId: true } } : undefined,
         product: {
           select: {
             productName: true,
@@ -76,26 +70,13 @@ router.get('/', authGuard, async (req: CustomRequest, res: Response) => {
     });
 
     // Map the data to the desired format
-    const formattedInventories = inventories.map((inventory) => {
-      const baseData = {
-        productName: inventory.product.productName,
-        supermarketName: inventory.supermarket.supermarketName,
-        price: inventory.price,
-        updatedAt: inventory.updatedAt,
-      };
-
-      if (req.user.role === 'ADMIN' && inventory.updatedBy) {
-        return {
-          ...baseData,
-          updatedBy: {
-            email: inventory.updatedBy.email,
-            userId: inventory.updatedBy.userId,
-          },
-        };
-      }
-
-      return baseData;
-    });
+    const formattedInventories = inventories.map((inventory) => ({
+      productName: inventory.product.productName,
+      supermarketName: inventory.supermarket.supermarketName,
+      price: inventory.price,
+      inStock: inventory.inStock,
+      updatedAt: inventory.updatedAt,
+    }));
 
     res.json(formattedInventories);
   } catch (error) {
@@ -118,6 +99,7 @@ router.get('/cheapest/:productId/:city', authGuard, async (req: CustomRequest, r
     const cheapestListing = await prisma.inventory.findFirst({
       where: {
         productId,
+        inStock: true,
         supermarket: {
           city,
         },
@@ -127,6 +109,7 @@ router.get('/cheapest/:productId/:city', authGuard, async (req: CustomRequest, r
       },
       select: {
         price: true,
+        inStock: true,
         updatedAt: req.user.role === 'ADMIN',
         updatedBy: req.user.role === 'ADMIN' ? { select: { email: true, userId: true } } : undefined,
         supermarket: {
@@ -154,13 +137,7 @@ router.get('/cheapest/:productId/:city', authGuard, async (req: CustomRequest, r
 });
 
 // Get all inventory items in a given supermarket
-router.get('/supermarket/:supermarketId', authGuard, async (req: CustomRequest, res: Response) => {
-  const allowedRoles = ['BASIC', 'VERIFIED', 'ADMIN'];
-
-  if (!allowedRoles.includes(req.user.role)) {
-    return res.status(403).json({ message: 'Insufficient permissions.' });
-  }
-
+router.get('/supermarket/:supermarketId', async (req: Request, res: Response) => {
   const { supermarketId } = req.params;
 
   try {
@@ -170,8 +147,8 @@ router.get('/supermarket/:supermarketId', authGuard, async (req: CustomRequest, 
       },
       select: {
         price: true,
-        updatedAt: req.user.role === 'ADMIN',
-        updatedBy: req.user.role === 'ADMIN' ? { select: { email: true, userId: true } } : undefined,
+        inStock: true,
+        updatedAt: true,
         supermarket: {
           select: {
             supermarketName: true,
@@ -203,7 +180,7 @@ router.patch('/:supermarketId/:productId', authGuard, async (req: CustomRequest,
   }
 
   const { supermarketId, productId } = req.params;
-  const { price } = req.body;
+  const { price, inStock } = req.body;
 
   try {
     const updatedInventory = await prisma.inventory.update({
@@ -215,6 +192,7 @@ router.patch('/:supermarketId/:productId', authGuard, async (req: CustomRequest,
       },
       data: {
         price,
+        inStock,
         updatedAt: new Date(),
         updatedBy: {
           connect: {

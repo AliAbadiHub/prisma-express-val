@@ -97,6 +97,7 @@ model Supermarket {
 
 model Inventory {
   price         Float
+  inStock       Boolean     @default(true)
   createdAt     DateTime    @default(now())
   createdBy     User?       @relation("createdByInventoryUser", fields: [createdById], references: [userId])
   createdById   String?
