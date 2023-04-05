@@ -21,6 +21,7 @@ router.post('/', authGuard, async (req: CustomRequest, res: Response) => {
             city: city,
           },
           productId: item.productId,
+          inStock: true,
         },
         orderBy: {
           price: 'asc',
