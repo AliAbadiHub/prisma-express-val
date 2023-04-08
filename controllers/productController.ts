@@ -171,4 +171,4 @@ router.patch('/:id', authGuard, async (req: CustomRequest, res: Response) => {
     }
   });
   
-  export default router;
+  export {router as productController };

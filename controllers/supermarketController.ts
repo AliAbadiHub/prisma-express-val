@@ -2,8 +2,6 @@ import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { CustomRequest } from '../types';
 import { authGuard } from '../auth/auth.guard';
-import { TreeLevelColumn } from 'typeorm';
-
 const router = Router();
 const prisma = new PrismaClient();
 
@@ -158,4 +156,4 @@ router.delete('/:id', authGuard, async (req: CustomRequest, res: Response) => {
     }
     });
 
-    export default router;
+    export { router as supermarketController };

@@ -1,11 +1,11 @@
 import { Request, Response, Router } from "express";
-import { PrismaClient } from "@prisma/client";
-import { authGuard } from "../auth/auth.guard";
-import argon2 from "argon2";
 import { CustomRequest } from "../types";
+const { PrismaClient } = require("@prisma/client");
+const { authGuard } = require("../auth/auth.guard");
+const argon2 = require("argon2");
+
 
 const prisma = new PrismaClient();
-
 const router = Router();
 
 
@@ -336,4 +336,4 @@ router.post("/", async (req: Request, res: Response) => {
 
   
   
-  export default router;
+  export { router as userController };

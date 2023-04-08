@@ -313,4 +313,4 @@ router.delete('/:supermarketId/:productId', authGuard, async (req: CustomRequest
 }
 });
 
-export default router;
+export { router as inventoryController };

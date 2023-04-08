@@ -70,4 +70,4 @@ router.post('/', authGuard, async (req: CustomRequest, res: Response) => {
   }
 });
 
-export default router;
+export { router as shoppingListController };
