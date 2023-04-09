@@ -1,8 +1,8 @@
-import { Request, Response, Router } from "express";
-import { CustomRequest } from "../types";
-const { PrismaClient } = require("@prisma/client");
-const { authGuard } = require("../auth/auth.guard");
-const argon2 = require("argon2");
+import { Request, Response, Router } from 'express';
+import { CustomRequest } from '../types';
+import { PrismaClient } from '@prisma/client';
+import { authGuard } from '../auth/auth.guard';
+import argon2 from 'argon2';
 
 
 const prisma = new PrismaClient();

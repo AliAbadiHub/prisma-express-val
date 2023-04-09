@@ -2,6 +2,8 @@ import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { CustomRequest } from '../types';
 import { authGuard } from '../auth/auth.guard';
+
+
 const router = Router();
 const prisma = new PrismaClient();
 
